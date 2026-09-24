@@ -53,7 +53,7 @@ Generator *chooseGenerator(const char *message);
  * @param matrix - ссылка на матрицу matrix
  * @param generator - ссылка на генератор
  */
-void runTask(Matrix &matrix, Generator &generator);
+void runTask(Matrix &matrix, const Generator &generator);
 
 /**
  * @brief Точка входа в программу
