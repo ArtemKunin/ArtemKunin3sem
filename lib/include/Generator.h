@@ -7,7 +7,7 @@ class Generator
 {
 public:
     /**
-     * @brief Виртуальный деструктор по умолчанию
+     * @brief Виртуальный деструктор
      */
     virtual ~Generator() = default;
 
