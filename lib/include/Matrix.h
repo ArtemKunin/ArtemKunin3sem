@@ -141,5 +141,5 @@ public:
      * @brief Заполнение матрицы с помощью абстрактного класса Generator
      * @param generator - результат выполнения функции Generator
      */
-    void fillArray(Generator &generator);
+    void fillArray(const Generator &generator);
 };
