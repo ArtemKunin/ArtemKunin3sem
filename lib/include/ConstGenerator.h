@@ -17,7 +17,7 @@ public:
      * @brief Конструктор
      * @param value Значение, которое будет всегда возвращаться
      */
-    explicit ConstGenerator(int value);
+    explicit ConstGenerator(const int value);
 
     /**
      * @brief Деструктор
