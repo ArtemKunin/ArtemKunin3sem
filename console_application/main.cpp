@@ -1,65 +1,66 @@
 #include <iostream>
+#include <vector>
 #include "Pharmacy.h"
+#include "Product.h"
+#include "Medicine.h"
+#include "ReleaseForm.h"
+#include "Manufacturer.h"
+#include "SaleRecord.h"
 
 /**
  * @brief Точка входа в программу
  * @return 0, если программа выполнена корректно
  */
-int main()
-{
+int main() {
+	system("chcp 65001 > nul");
 
-    system("chcp 65001 > nul");
+	Pharmacy pharmacy;
 
-    Pharmacy pharmacy;
-    pharmacy.addReleaseForm(ReleaseForm("Таблетки"));
-    pharmacy.addReleaseForm(ReleaseForm("Сироп"));
-    pharmacy.addManufacturer(Manufacturer("ООО ФармаПлюс"));
-    pharmacy.addManufacturer(Manufacturer("Здоровье Инкорпорейтед"));
-    Medicine med1("Парацетамол", 150.50, ReleaseForm("Таблетки"), Manufacturer("ООО ФармаПлюс"), "12.2025", "Принимать при высокой температуре");
-    med1.addTargetDisease("Жар");
-    med1.addTargetDisease("Головная боль");
-    med1.addSale(SaleRecord("Иванов Иван Иванович", "15.10.2023", 2));
-    med1.addSale(SaleRecord("Петров Пётр Петрович", "20.10.2023", 1));
-    med1.addSale(SaleRecord("Сидоров Сидор", "05.11.2023", 3));
+	pharmacy.addReleaseForm(ReleaseForm("Таблетки"));
+	pharmacy.addReleaseForm(ReleaseForm("Сироп"));
+	pharmacy.addManufacturer(Manufacturer("ООО ФармаПлюс"));
+	pharmacy.addManufacturer(Manufacturer("Здоровье Инкорпорейтед"));
 
-    Medicine med2("Доктор Мом", 320.00, ReleaseForm("Сироп"), Manufacturer("Здоровье Инкорпорейтед"), "01.2026", "Пить по одной ложке 3 раза в день");
-    med2.addTargetDisease("Кашель");
-    med2.addTargetDisease("Боль в горле");
-    med2.addSale(SaleRecord("Смирнова Анна", "18.10.2023", 1));
+	Medicine med1("Парацетамол", 150.50, ReleaseForm("Таблетки"), Manufacturer("ООО ФармаПлюс"), "12.2025", "Принимать при высокой температуре");
+	med1.addTargetDisease("Жар");
+	med1.addTargetDisease("Головная боль");
+	med1.addSale(SaleRecord("Иванов Иван Иванович", "15.10.2023", 2));
+	med1.addSale(SaleRecord("Петров Пётр Петрович", "20.10.2023", 1));
+	med1.addSale(SaleRecord("Сидоров Сидор", "05.11.2023", 3));
 
-    pharmacy.addMedicine(med1);
-    pharmacy.addMedicine(med2);
+	Medicine med2("Доктор Мом", 320.00, ReleaseForm("Сироп"), Manufacturer("Здоровье Инкорпорейтед"), "01.2026", "Пить по одной ложке 3 раза в день");
+	med2.addTargetDisease("Кашель");
+	med2.addTargetDisease("Боль в горле");
+	med2.addSale(SaleRecord("Смирнова Анна", "18.10.2023", 1));
 
-    Product prod1("Гематоген", 50.0);
-    pharmacy.addProduct(prod1);
+	pharmacy.addMedicine(med1);
+	pharmacy.addMedicine(med2);
 
-    pharmacy.printAll();
+	Product prod1("Гематоген", 50.0);
+	pharmacy.addProduct(prod1);
 
-    for (const Medicine &m : pharmacy.getMedicines())
-    {
-        std::cout << m.getInfo() << "\n"
-                  << std::endl;
-    }
+	std::cout << "Все товары и лекарства:" << std::endl;
+	pharmacy.printAll();
 
-    pharmacy.printSalesForMedicineByPeriod("Парацетамол", ".10.2023"); 
-    pharmacy.printSalesForMedicineByPeriod("Парацетамол", ".11.2023"); 
+	std::cout << "\nПродажи за период:" << std::endl;
+	pharmacy.printSalesForMedicineByPeriod("Парацетамол", ".10.2023");
+	pharmacy.printSalesForMedicineByPeriod("Парацетамол", ".11.2023");
 
-    pharmacy.printMedicinesForDisease("Головная боль");
-    pharmacy.printMedicinesForDisease("Кашель");
+	std::cout << "\nЛекарства по болезни:" << std::endl;
+	pharmacy.printMedicinesForDisease("Головная боль");
+	pharmacy.printMedicinesForDisease("Кашель");
 
-    std::vector<Product *> baseCollection;
-    baseCollection.push_back(new Product("Аскорбинка", 25.0));
-    baseCollection.push_back(new Medicine("Аспирин", 120.0, ReleaseForm("Таблетки"), Manufacturer("Bayer"), "10.2027", "Обезболивающее"));
+	Product baseItem("Аскорбинка", 25.0);
+	Medicine derivedItem("Аспирин", 120.0, ReleaseForm("Таблетки"), Manufacturer("Bayer"), "10.2027", "Обезболивающее");
 
-    for (const Product *item : baseCollection)
-    {
-        std::cout << item->getInfo() << "\n"
-                  << std::endl;
-    }
-    for (Product *item : baseCollection)
-    {
-        delete item;
-    }
+	std::vector<std::reference_wrapper<const Product>> baseCollection;
+	baseCollection.push_back(std::cref(baseItem));
+	baseCollection.push_back(std::cref(derivedItem));
 
-    return 0;
+	std::cout << "\nКоллекция базового типа:" << std::endl;
+	for (const Product& item : baseCollection) {
+		std::cout << item.getInfo() << "\n" << std::endl;
+	}
+
+	return 0;
 }
