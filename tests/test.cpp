@@ -1,16 +1,15 @@
 #include <gtest/gtest.h>
-
 #include "Pharmacy.h"
 #include "Product.h"
 #include "Medicine.h"
 #include "ReleaseForm.h"
 #include "Manufacturer.h"
 #include "SaleRecord.h"
-
 #include <string>
 #include <algorithm>
 #include <sstream>
 #include <iostream>
+#include <typeinfo>
 
 TEST(ReleaseFormTest, DefaultConstructor) {
     ReleaseForm form;
@@ -190,15 +189,15 @@ TEST(PharmacyTest, AddAndGetProductsAndMedicines) {
 
     Product p("Гематоген", 50.0);
     ph.addProduct(p);
-    ph.addProduct(p); 
+    ph.addProduct(p);
 
     EXPECT_EQ(ph.getProducts().size(), 1u);
     EXPECT_TRUE(pharmacyHasName(ph, "Гематоген"));
 
     Medicine m1("Аспирин", 120.0, ReleaseForm("Таблетки"), Manufacturer("Bayer"), "10.2025", "От боли");
     ph.addMedicine(m1);
-    ph.addMedicine(m1); 
-    ph.addProduct(m1); 
+    ph.addMedicine(m1);
+    ph.addProduct(m1);
 
     EXPECT_EQ(ph.getMedicines().size(), 1u);
     EXPECT_TRUE(pharmacyHasName(ph, "Аспирин"));
@@ -217,7 +216,7 @@ TEST(PharmacyTest, DuplicateIdRejectedAcrossLists) {
     Medicine mSameIdAsProduct("Зеленка", 60.0, ReleaseForm("Раствор"), Manufacturer("Фарм"), "01.2027", "Антисептик", 100);
 
     ph.addProduct(p1);
-    ph.addProduct(p2); 
+    ph.addProduct(p2);
     ph.addMedicine(mSameIdAsProduct);
 
     EXPECT_EQ(ph.getProducts().size(), 1u);
@@ -231,8 +230,8 @@ TEST(PharmacyTest, DuplicateIdRejectedAcrossLists) {
     Product pSameIdAsMedicine("Жгут", 110.0, 200);
 
     ph.addMedicine(m1);
-    ph.addMedicine(m2); 
-    ph.addProduct(pSameIdAsMedicine); 
+    ph.addMedicine(m2);
+    ph.addProduct(pSameIdAsMedicine);
 
     EXPECT_EQ(ph.getMedicines().size(), 1u);
     EXPECT_EQ(ph.getProducts().size(), 1u);
@@ -261,18 +260,18 @@ TEST(PharmacyTest, AddAndGetManufacturersAndReleaseFormsDeduplication) {
     EXPECT_EQ(ph.getReleaseForms()[1].getFormName(), "Сироп");
 }
 
-TEST(PharmacyTest, PolymorphismAndVirtualDestructor) {
-    Product* pPtr = new Product("Аскорбинка", 25.0);
-    Product* mPtr = new Medicine("Смекта", 180.0, ReleaseForm("Порошок"), Manufacturer("Ipsen"), "08.2027", "Для ЖКТ");
+TEST(PharmacyTest, PolymorphismByReference) {
+    Product p("Аскорбинка", 25.0);
+    Medicine m("Смекта", 180.0, ReleaseForm("Порошок"), Manufacturer("Ipsen"), "08.2027", "Для ЖКТ");
 
-    EXPECT_EQ(dynamic_cast<const Medicine*>(pPtr), nullptr);
-    EXPECT_NE(dynamic_cast<const Medicine*>(mPtr), nullptr);
+    const Product& pRef = p;
+    const Product& mRef = m;
 
-    EXPECT_EQ(pPtr->getInfo().find("Порошок"), std::string::npos);
-    EXPECT_NE(mPtr->getInfo().find("Порошок"), std::string::npos);
+    EXPECT_THROW((void)dynamic_cast<const Medicine&>(pRef), std::bad_cast);
+    EXPECT_NO_THROW((void)dynamic_cast<const Medicine&>(mRef));
 
-    delete pPtr;
-    delete mPtr;
+    EXPECT_EQ(pRef.getInfo().find("Порошок"), std::string::npos);
+    EXPECT_NE(mRef.getInfo().find("Порошок"), std::string::npos);
 }
 
 TEST(PharmacyTest, PrintAllOutput) {
@@ -280,13 +279,9 @@ TEST(PharmacyTest, PrintAllOutput) {
     ph.addProduct(Product("Гематоген", 50.0, 1));
     ph.addMedicine(Medicine("Аспирин", 120.0, ReleaseForm("Таблетки"), Manufacturer("Bayer"), "10.2025", "От боли", 2));
 
-    std::stringstream buffer;
-    std::streambuf* oldCout = std::cout.rdbuf(buffer.rdbuf());
-
+    testing::internal::CaptureStdout();
     ph.printAll();
-
-    std::cout.rdbuf(oldCout);
-    std::string output = buffer.str();
+    std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_NE(output.find("Гематоген"), std::string::npos);
     EXPECT_NE(output.find("Аспирин"), std::string::npos);
@@ -300,29 +295,23 @@ TEST(PharmacyTest, PrintSalesForMedicineByPeriodOutput) {
     m.addSale(SaleRecord("Сидоров С.С.", "05.11.2023", 3));
     ph.addMedicine(m);
 
-    std::stringstream buffer1;
-    std::streambuf* oldCout1 = std::cout.rdbuf(buffer1.rdbuf());
+    testing::internal::CaptureStdout();
     ph.printSalesForMedicineByPeriod("Парацетамол", ".10.2023");
-    std::cout.rdbuf(oldCout1);
+    std::string out1 = testing::internal::GetCapturedStdout();
 
-    std::string out1 = buffer1.str();
     EXPECT_NE(out1.find("Иванов И.И."), std::string::npos);
     EXPECT_EQ(out1.find("Сидоров С.С."), std::string::npos);
 
-    std::stringstream buffer2;
-    std::streambuf* oldCout2 = std::cout.rdbuf(buffer2.rdbuf());
+    testing::internal::CaptureStdout();
     ph.printSalesForMedicineByPeriod("Парацетамол", ".12.2023");
-    std::cout.rdbuf(oldCout2);
+    std::string out2 = testing::internal::GetCapturedStdout();
 
-    std::string out2 = buffer2.str();
     EXPECT_NE(out2.find("Продаж за этот период не найдено"), std::string::npos);
 
-    std::stringstream buffer3;
-    std::streambuf* oldCout3 = std::cout.rdbuf(buffer3.rdbuf());
+    testing::internal::CaptureStdout();
     ph.printSalesForMedicineByPeriod("Несуществующее", ".10.2023");
-    std::cout.rdbuf(oldCout3);
+    std::string out3 = testing::internal::GetCapturedStdout();
 
-    std::string out3 = buffer3.str();
     EXPECT_NE(out3.find("Продаж за этот период не найдено"), std::string::npos);
 }
 
@@ -337,20 +326,16 @@ TEST(PharmacyTest, PrintMedicinesForDiseaseOutput) {
     ph.addMedicine(m1);
     ph.addMedicine(m2);
 
-    std::stringstream buffer1;
-    std::streambuf* oldCout1 = std::cout.rdbuf(buffer1.rdbuf());
+    testing::internal::CaptureStdout();
     ph.printMedicinesForDisease("Головная боль");
-    std::cout.rdbuf(oldCout1);
+    std::string out1 = testing::internal::GetCapturedStdout();
 
-    std::string out1 = buffer1.str();
     EXPECT_NE(out1.find("Парацетамол"), std::string::npos);
     EXPECT_EQ(out1.find("Доктор Мом"), std::string::npos);
 
-    std::stringstream buffer2;
-    std::streambuf* oldCout2 = std::cout.rdbuf(buffer2.rdbuf());
+    testing::internal::CaptureStdout();
     ph.printMedicinesForDisease("Бессонница");
-    std::cout.rdbuf(oldCout2);
+    std::string out2 = testing::internal::GetCapturedStdout();
 
-    std::string out2 = buffer2.str();
     EXPECT_NE(out2.find("Подходящих лекарств не найдено"), std::string::npos);
 }
